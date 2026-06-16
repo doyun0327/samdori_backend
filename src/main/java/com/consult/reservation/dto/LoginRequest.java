@@ -4,15 +4,12 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
+/** 로그인 API 요청 DTO */
 @Getter
 @Setter
 @NoArgsConstructor
-public class UserCreateRequest {
+public class LoginRequest {
 
     private String loginId;
-    private String name;
-    private String phoneNumber;
-    private String email;
     private String password;
-    private String role;
 }

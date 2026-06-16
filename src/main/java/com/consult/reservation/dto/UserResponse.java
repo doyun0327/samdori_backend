@@ -11,6 +11,7 @@ public class UserResponse {
     private final String name;
     private final String phoneNumber;
     private final String email;
+    private final String role;
 
     public UserResponse(User user) {
         this.id = user.getId();
@@ -18,5 +19,6 @@ public class UserResponse {
         this.name = user.getName();
         this.phoneNumber = user.getPhoneNumber();
         this.email = user.getEmail();
+        this.role = user.getRole();
     }
 }
