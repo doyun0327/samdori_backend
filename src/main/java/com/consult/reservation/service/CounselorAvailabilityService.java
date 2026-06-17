@@ -1,5 +1,6 @@
 package com.consult.reservation.service;
 
+import com.consult.reservation.dto.AvailabilityItemResponse;
 import com.consult.reservation.dto.AvailabilityRequest;
 import com.consult.reservation.dto.AvailabilityResponse;
 import com.consult.reservation.entity.CounselorAvailability;
@@ -74,6 +75,24 @@ public class CounselorAvailabilityService {
         return new AvailabilityResponse(counselorId, date.toString(), deletedSlots);
     }
 
+    /** 상담사 id로 등록된 상담 가능 시간 목록을 { date, timeSlot }[] 형태로 반환한다. */
+    public List<AvailabilityItemResponse> findAll(Long id) {
+        validateCounselorId(id);
+
+        return availabilityRepository.findByCounselorIdOrderByAvailabilityDateAscTimeSlotAsc(id).stream()
+                .map(AvailabilityItemResponse::new)
+                .toList();
+    }
+
+    private void validateCounselorId(Long id) {
+        if (id == null) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "id를 입력해주세요.");
+        }
+        if (!userRepository.existsById(id)) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "존재하지 않는 상담사입니다.");
+        }
+    }
+
     private List<String> normalizeTimeSlots(List<String> timeSlots) {
         return timeSlots.stream()
                 .map(String::trim)
@@ -82,12 +101,7 @@ public class CounselorAvailabilityService {
     }
 
     private void validate(AvailabilityRequest request) {
-        if (request.getId() == null) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "id를 입력해주세요.");
-        }
-        if (!userRepository.existsById(request.getId())) {
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "존재하지 않는 상담사입니다.");
-        }
+        validateCounselorId(request.getId());
         if (request.getDate() == null || request.getDate().isBlank()) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "date를 입력해주세요.");
         }
