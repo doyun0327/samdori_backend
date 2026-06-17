@@ -1,10 +1,12 @@
 package com.consult.reservation.service;
 
+import com.consult.reservation.dto.CounselorSummaryResponse;
 import com.consult.reservation.dto.LoginRequest;
 import com.consult.reservation.dto.UserCreateRequest;
 import com.consult.reservation.dto.UserResponse;
 import com.consult.reservation.entity.User;
 import com.consult.reservation.repository.UserRepository;
+import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
@@ -13,6 +15,8 @@ import org.springframework.web.server.ResponseStatusException;
 @Service
 @RequiredArgsConstructor
 public class UserService {
+
+    private static final String COUNSELOR_ROLE = "COUNSELOR";
 
     private final UserRepository userRepository;
 
@@ -66,6 +70,13 @@ public class UserService {
         }
 
         return new UserResponse(user);
+    }
+
+    /** role이 COUNSELOR인 사용자 목록을 반환한다. */
+    public List<CounselorSummaryResponse> getCounselors() {
+        return userRepository.findByRoleOrderByNameAsc(COUNSELOR_ROLE).stream()
+                .map(CounselorSummaryResponse::new)
+                .toList();
     }
 
 }

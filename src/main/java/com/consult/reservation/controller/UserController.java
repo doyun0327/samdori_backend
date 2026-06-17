@@ -1,11 +1,14 @@
 package com.consult.reservation.controller;
 
+import com.consult.reservation.dto.CounselorSummaryResponse;
 import com.consult.reservation.dto.LoginRequest;
 import com.consult.reservation.dto.UserCreateRequest;
 import com.consult.reservation.dto.UserResponse;
 import com.consult.reservation.service.UserService;
+import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -18,6 +21,12 @@ import org.springframework.web.bind.annotation.RestController;
 public class UserController {
 
     private final UserService userService;
+
+    /** GET /api/user/counselors — 상담사 목록 조회 */
+    @GetMapping("/counselors")
+    public List<CounselorSummaryResponse> getCounselors() {
+        return userService.getCounselors();
+    }
 
     @PostMapping("/create")
     @ResponseStatus(HttpStatus.CREATED)
