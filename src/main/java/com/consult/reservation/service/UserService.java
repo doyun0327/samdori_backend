@@ -1,7 +1,6 @@
 package com.consult.reservation.service;
 
 import com.consult.reservation.dto.LoginRequest;
-import com.consult.reservation.dto.LoginResponse;
 import com.consult.reservation.dto.UserCreateRequest;
 import com.consult.reservation.dto.UserResponse;
 import com.consult.reservation.entity.User;
@@ -56,9 +55,9 @@ public class UserService {
 
     /**
      * 로그인: loginId로 사용자를 조회한 뒤 비밀번호를 비교한다.
-     * 성공 시 id, name만 반환한다.
+     * 성공 시 UserResponse를 반환한다.
      */
-    public LoginResponse login(LoginRequest request) {
+    public UserResponse login(LoginRequest request) {
         User user = userRepository.findByLoginId(request.getLoginId())
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "존재하지 않는 아이디입니다."));
 
@@ -66,7 +65,7 @@ public class UserService {
             throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "비밀번호가 일치하지 않습니다.");
         }
 
-        return new LoginResponse(user);
+        return new UserResponse(user);
     }
 
 }

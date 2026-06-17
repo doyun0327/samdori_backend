@@ -1,7 +1,6 @@
 package com.consult.reservation.controller;
 
 import com.consult.reservation.dto.LoginRequest;
-import com.consult.reservation.dto.LoginResponse;
 import com.consult.reservation.dto.UserCreateRequest;
 import com.consult.reservation.dto.UserResponse;
 import com.consult.reservation.service.UserService;
@@ -28,7 +27,7 @@ public class UserController {
 
     /** POST /api/user/login — loginId·password로 로그인 */
     @PostMapping("/login")
-    public LoginResponse login(@RequestBody LoginRequest request) {
+    public UserResponse login(@RequestBody LoginRequest request) {
         return userService.login(request);
     }
 }
