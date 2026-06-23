@@ -11,9 +11,11 @@ public class CounselorSummaryResponse {
 
     private final Long id;
     private final String name;
+    private final String centerName;
 
     public CounselorSummaryResponse(User user) {
         this.id = user.getId();
         this.name = user.getName();
+        this.centerName = user.getCenterName();
     }
 }
