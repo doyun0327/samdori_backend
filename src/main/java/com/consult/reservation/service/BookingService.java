@@ -25,12 +25,14 @@ import org.springframework.web.server.ResponseStatusException;
 public class BookingService {
 
     private static final String COUNSELOR_ROLE = "COUNSELOR";
+    private static final String CLIENT_ROLE = "CLIENT";
     private static final List<BookingStatus> ACTIVE_STATUSES = List.of(
             BookingStatus.PENDING, BookingStatus.ACCEPTED);
 
     private final BookingRepository bookingRepository;
     private final CounselorAvailabilityRepository availabilityRepository;
     private final UserRepository userRepository;
+    private final NotificationService notificationService;
 
     /** 내담자 예약 요청 생성 */
     @Transactional
@@ -63,7 +65,10 @@ public class BookingService {
         booking.setStatus(BookingStatus.PENDING);
         booking.setRequestedAt(LocalDateTime.now());
 
-        return toResponse(bookingRepository.save(booking), client, counselor);
+        Booking saved = bookingRepository.save(booking);
+        BookingResponse response = toResponse(saved, client, counselor);
+        notifyCounselor(response);
+        return response;
     }
 
     /** 내담자 예약 목록 */
@@ -91,7 +96,9 @@ public class BookingService {
         Booking booking = findPendingBookingForCounselor(bookingId, request.getCounselorId());
         booking.setStatus(BookingStatus.ACCEPTED);
         booking.setRespondedAt(LocalDateTime.now());
-        return toResponse(booking);
+        BookingResponse response = toResponse(booking);
+        notifyClient(response);
+        return response;
     }
 
     /** 상담사 예약 거절 */
@@ -100,7 +107,9 @@ public class BookingService {
         Booking booking = findPendingBookingForCounselor(bookingId, request.getCounselorId());
         booking.setStatus(BookingStatus.REJECTED);
         booking.setRespondedAt(LocalDateTime.now());
-        return toResponse(booking);
+        BookingResponse response = toResponse(booking);
+        notifyClient(response);
+        return response;
     }
 
     /** 내담자 예약 취소 */
@@ -123,7 +132,9 @@ public class BookingService {
 
         booking.setStatus(BookingStatus.CANCELLED);
         booking.setCancelledAt(LocalDateTime.now());
-        return toResponse(booking);
+        BookingResponse response = toResponse(booking);
+        notifyCounselor(response);
+        return response;
     }
 
     private Booking findPendingBookingForCounselor(Long bookingId, Long counselorId) {
@@ -184,6 +195,16 @@ public class BookingService {
 
     private BookingResponse toResponse(Booking booking, User client, User counselor) {
         return new BookingResponse(booking, client, counselor);
+    }
+
+    /** 내담자 예약 상태 변경 알림 전송 */
+    private void notifyClient(BookingResponse booking) {
+        notificationService.sendBookingUpdated(booking.getClientId(), CLIENT_ROLE, booking);
+    }
+
+    /** 상담사 예약 상태 변경 알림 전송 */
+    private void notifyCounselor(BookingResponse booking) {
+        notificationService.sendBookingUpdated(booking.getCounselorId(), COUNSELOR_ROLE, booking);
     }
 
     private LocalDate parseDate(String date) {
