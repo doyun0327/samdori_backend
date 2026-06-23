@@ -14,4 +14,7 @@ public interface CounselorAvailabilityRepository extends JpaRepository<Counselor
             Long counselorId, LocalDate availabilityDate, Collection<String> timeSlots);
 
     List<CounselorAvailability> findByCounselorIdOrderByAvailabilityDateAscTimeSlotAsc(Long counselorId);
+
+    boolean existsByCounselorIdAndAvailabilityDateAndTimeSlot(
+            Long counselorId, LocalDate availabilityDate, String timeSlot);
 }
