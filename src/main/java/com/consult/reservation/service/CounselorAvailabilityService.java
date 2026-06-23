@@ -23,7 +23,8 @@ public class CounselorAvailabilityService {
     private final UserRepository userRepository;
 
     /**
-     * 해당 상담사·날짜의 기존 슬롯을 지우고, 요청받은 timeSlots로 다시 등록한다.
+     * 상담사·날짜·시간대가 모두 같을 때만 등록을 막고, 다른 시간대는 추가한다.
+     * 예) 2026-06-20 + 09:00-10:00 중복 → skip / 2026-06-20 + 10:00-11:00 → insert
      */
     @Transactional
     public AvailabilityResponse save(AvailabilityRequest request) {
@@ -33,21 +34,20 @@ public class CounselorAvailabilityService {
         LocalDate date = parseDate(request.getDate());
         List<String> timeSlots = normalizeTimeSlots(request.getTimeSlots());
 
-        availabilityRepository.deleteByCounselorIdAndAvailabilityDate(counselorId, date);
+        for (String timeSlot : timeSlots) {
+            if (isDuplicate(counselorId, date, timeSlot)) {
+                continue;
+            }
 
-        List<CounselorAvailability> entities = timeSlots.stream()
-                .map(timeSlot -> {
-                    CounselorAvailability availability = new CounselorAvailability();
-                    availability.setCounselorId(counselorId);
-                    availability.setAvailabilityDate(date);
-                    availability.setTimeSlot(timeSlot);
-                    return availability;
-                })
-                .toList();
+            CounselorAvailability availability = new CounselorAvailability();
+            availability.setCounselorId(counselorId);
+            availability.setAvailabilityDate(date);
+            availability.setTimeSlot(timeSlot);
+            availabilityRepository.save(availability);
+        }
 
-        availabilityRepository.saveAll(entities);
-
-        return new AvailabilityResponse(counselorId, date.toString(), timeSlots);
+        List<String> savedSlots = findTimeSlotsByDate(counselorId, date);
+        return new AvailabilityResponse(counselorId, date.toString(), savedSlots);
     }
 
     /** id·date·timeSlots에 해당하는 상담 가능 시간을 삭제한다. */
@@ -59,8 +59,13 @@ public class CounselorAvailabilityService {
         LocalDate date = parseDate(request.getDate());
         List<String> timeSlots = normalizeTimeSlots(request.getTimeSlots());
 
-        List<CounselorAvailability> targets = availabilityRepository
-                .findByCounselorIdAndAvailabilityDateAndTimeSlotIn(counselorId, date, timeSlots);
+        List<CounselorAvailability> existing = availabilityRepository
+                .findByCounselorIdAndAvailabilityDateOrderByTimeSlotAsc(counselorId, date);
+
+        List<CounselorAvailability> targets = existing.stream()
+                .filter(slot -> timeSlots.stream()
+                        .anyMatch(requested -> isSameTimeSlot(slot.getTimeSlot(), requested)))
+                .toList();
 
         if (targets.isEmpty()) {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "삭제할 상담 가능 시간이 없습니다.");
@@ -93,10 +98,45 @@ public class CounselorAvailabilityService {
         }
     }
 
+    /** counselor_id + availability_date + time_slot 이 모두 같으면 중복 */
+    private boolean isDuplicate(Long counselorId, LocalDate date, String timeSlot) {
+        return availabilityRepository
+                .findByCounselorIdAndAvailabilityDateOrderByTimeSlotAsc(counselorId, date)
+                .stream()
+                .anyMatch(existing -> isSameTimeSlot(existing.getTimeSlot(), timeSlot));
+    }
+
+    private boolean isSameTimeSlot(String left, String right) {
+        return normalizeTimeSlot(left).equals(normalizeTimeSlot(right));
+    }
+
     private List<String> normalizeTimeSlots(List<String> timeSlots) {
         return timeSlots.stream()
-                .map(String::trim)
+                .map(this::normalizeTimeSlot)
                 .distinct()
+                .toList();
+    }
+
+    private String normalizeTimeSlot(String slot) {
+        String[] parts = slot.trim().split("-");
+        if (parts.length != 2) {
+            return slot.trim();
+        }
+        return normalizeTime(parts[0]) + "-" + normalizeTime(parts[1]);
+    }
+
+    private String normalizeTime(String time) {
+        String[] segments = time.trim().split(":");
+        int hour = Integer.parseInt(segments[0]);
+        int minute = Integer.parseInt(segments[1]);
+        return String.format("%02d:%02d", hour, minute);
+    }
+
+    private List<String> findTimeSlotsByDate(Long counselorId, LocalDate date) {
+        return availabilityRepository
+                .findByCounselorIdAndAvailabilityDateOrderByTimeSlotAsc(counselorId, date)
+                .stream()
+                .map(CounselorAvailability::getTimeSlot)
                 .toList();
     }
 
