@@ -1,6 +1,7 @@
 package com.consult.reservation.exception;
 
 import com.consult.reservation.dto.ErrorResponse;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -8,11 +9,13 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.server.ResponseStatusException;
 
 @RestControllerAdvice
+@Slf4j
 public class GlobalExceptionHandler {
 
     /** ResponseStatusException의 reason을 message로 프론트에 전달 */
     @ExceptionHandler(ResponseStatusException.class)
     public ResponseEntity<ErrorResponse> handleResponseStatusException(ResponseStatusException ex) {
+        log.warn("[API 오류] status={}, message={}", ex.getStatusCode().value(), ex.getReason());
         String message = ex.getReason();
         if (message == null || message.isBlank()) {
             message = ex.getStatusCode().toString();
@@ -25,6 +28,7 @@ public class GlobalExceptionHandler {
     /** 예상하지 못한 서버 오류 */
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ErrorResponse> handleException(Exception ex) {
+        log.error("[API 오류] 예상하지 못한 서버 오류", ex);
         ErrorResponse body = new ErrorResponse(
                 HttpStatus.INTERNAL_SERVER_ERROR.value(),
                 "서버 오류가 발생했습니다."

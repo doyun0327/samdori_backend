@@ -38,4 +38,8 @@ public class User {
 
     @Column(nullable = false)
     private String role;
+
+    @Column(name = "center_name", nullable = false)
+    private String centerName;
+
 }

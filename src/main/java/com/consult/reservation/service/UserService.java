@@ -8,12 +8,14 @@ import com.consult.reservation.entity.User;
 import com.consult.reservation.repository.UserRepository;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class UserService {
 
     private static final String COUNSELOR_ROLE = "COUNSELOR";
@@ -22,24 +24,40 @@ public class UserService {
 
     /** 회원가입: 중복 검사 후 사용자를 저장한다. */
     public UserResponse create(UserCreateRequest request) {
-        validate(request);
+        log.debug("[회원가입] 요청 loginId={}, email={}, role={}",
+                request.getLoginId(), request.getEmail(), request.getRole());
 
-        if (userRepository.existsByLoginId(request.getLoginId())) {
-            throw new ResponseStatusException(HttpStatus.CONFLICT, "이미 사용 중인 loginId입니다.");
+        try {
+            validate(request);
+
+            if (userRepository.existsByLoginId(request.getLoginId())) {
+                throw new ResponseStatusException(HttpStatus.CONFLICT, "이미 사용 중인 loginId입니다.");
+            }
+            if (userRepository.existsByEmail(request.getEmail())) {
+                throw new ResponseStatusException(HttpStatus.CONFLICT, "이미 사용 중인 email입니다.");
+            }
+
+            User user = new User();
+            user.setLoginId(request.getLoginId());
+            user.setName(request.getName());
+            user.setPhoneNumber(request.getPhoneNumber());
+            user.setEmail(request.getEmail());
+            user.setPassword(request.getPassword());
+            user.setRole(request.getRole());
+            user.setCenterName(request.getCenterName());
+
+            UserResponse response = new UserResponse(userRepository.save(user));
+            log.info("[회원가입] 성공 loginId={}, userId={}", response.getLoginId(), response.getId());
+            return response;
+        } catch (ResponseStatusException ex) {
+            log.warn("[회원가입] 실패 status={}, message={}, loginId={}",
+                    ex.getStatusCode().value(), ex.getReason(), request.getLoginId());
+            throw ex;
+        } catch (Exception ex) {
+            log.error("[회원가입] 서버 오류 loginId={}, email={}",
+                    request.getLoginId(), request.getEmail(), ex);
+            throw ex;
         }
-        if (userRepository.existsByEmail(request.getEmail())) {
-            throw new ResponseStatusException(HttpStatus.CONFLICT, "이미 사용 중인 email입니다.");
-        }
-
-        User user = new User();
-        user.setLoginId(request.getLoginId());
-        user.setName(request.getName());
-        user.setPhoneNumber(request.getPhoneNumber());
-        user.setEmail(request.getEmail());
-        user.setPassword(request.getPassword());
-        user.setRole(request.getRole());
-
-        return new UserResponse(userRepository.save(user));
     }
 
     private void validate(UserCreateRequest request) {

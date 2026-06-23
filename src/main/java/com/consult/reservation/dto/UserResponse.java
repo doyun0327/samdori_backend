@@ -12,6 +12,7 @@ public class UserResponse {
     private final String phoneNumber;
     private final String email;
     private final String role;
+    private final String centerName;
 
     public UserResponse(User user) {
         this.id = user.getId();
@@ -20,5 +21,6 @@ public class UserResponse {
         this.phoneNumber = user.getPhoneNumber();
         this.email = user.getEmail();
         this.role = user.getRole();
+        this.centerName = user.getCenterName();
     }
 }
