@@ -23,14 +23,14 @@ public class FcmService {
     private final DeviceTokenRepository deviceTokenRepository;
 
     /** userId에 등록된 모든 기기로 예약 알림 push */
-    public void sendBookingUpdated(Long userId, BookingResponse booking) {
+    public void sendBookingUpdated(Long userId, String role, BookingResponse booking) {
         List<DeviceToken> tokens = deviceTokenRepository.findByUserId(userId);
         if (tokens.isEmpty()) {
             log.warn("[FCM] userId={} 에 등록된 토큰 없음 — Flutter에서 POST /api/devices/token 호출 필요", userId);
             return;
         }
 
-        String title = buildTitle(booking.getStatus());
+        String title = buildTitle(booking, role);
         String body = buildBody(booking);
         Map<String, String> data = buildData(booking);
 
@@ -71,19 +71,26 @@ public class FcmService {
                 || code == MessagingErrorCode.INVALID_ARGUMENT;
     }
 
-    private String buildTitle(String status) {
-        return switch (status) {
-            case "PENDING" -> "새 예약 요청";
-            case "ACCEPTED" -> "예약 확정";
-            case "REJECTED" -> "예약 거절";
-            case "CANCELLED" -> "예약 취소";
-            default -> "예약 알림";
+    private static final String COUNSELOR_ROLE = "COUNSELOR";
+
+    private String buildTitle(BookingResponse booking, String role) {
+        boolean toCounselor = COUNSELOR_ROLE.equalsIgnoreCase(role);
+
+        return switch (booking.getStatus()) {
+            case "PENDING" -> toCounselor
+                    ? "🔔 [새 예약 요청] " + booking.getClientName() + " 님"
+                    : "🔔 [예약 요청] " + booking.getCounselorName() + " 상담사";
+            case "ACCEPTED" -> "🔔 [예약 확정] " + booking.getCounselorName() + " 상담사";
+            case "REJECTED" -> "🔔 [예약 거절] " + booking.getCounselorName() + " 상담사";
+            case "CANCELLED" -> toCounselor
+                    ? "🔔 [예약 취소] " + booking.getClientName() + " 님"
+                    : "🔔 [예약 취소] " + booking.getCounselorName() + " 상담사";
+            default -> "🔔 [예약 알림]";
         };
     }
 
     private String buildBody(BookingResponse booking) {
-        return booking.getDate() + " " + booking.getTimeSlot()
-                + " (" + booking.getStatus() + ")";
+        return booking.getDate() + " " + booking.getTimeSlot();
     }
 
     private Map<String, String> buildData(BookingResponse booking) {

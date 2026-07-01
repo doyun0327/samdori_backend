@@ -34,7 +34,7 @@ public class NotificationService {
                 SseEmitterRegistry.EVENT_BOOKING_UPDATED,
                 booking
         );
-        fcmService.sendBookingUpdated(userId, booking);
+        fcmService.sendBookingUpdated(userId, role, booking);
     }
 
     private void validateSubscriber(Long userId, String role) {
