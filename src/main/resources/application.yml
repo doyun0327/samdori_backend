@@ -13,4 +13,7 @@ spring:
     properties:
       hibernate:
         format_sql: true
-        
+
+firebase:
+  credentials-path: file:C:/FirebaseSDK/samdori-a003e-firebase-adminsdk-fbsvc-7129d4e7e9.json
+

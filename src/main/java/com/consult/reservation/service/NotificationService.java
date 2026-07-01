@@ -1,6 +1,7 @@
 package com.consult.reservation.service;
 
 import com.consult.reservation.dto.BookingResponse;
+import com.consult.reservation.notification.FcmService;
 import com.consult.reservation.notification.SseEmitterRegistry;
 import com.consult.reservation.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
@@ -17,6 +18,7 @@ public class NotificationService {
     private static final String COUNSELOR_ROLE = "COUNSELOR";
 
     private final SseEmitterRegistry sseEmitterRegistry;
+    private final FcmService fcmService;
     private final UserRepository userRepository;
 
     public SseEmitter subscribe(Long userId, String role) {
@@ -24,7 +26,7 @@ public class NotificationService {
         return sseEmitterRegistry.connect(userId, role);
     }
 
-    /** booking-updated 이벤트 전송 */
+    /** booking-updated: SSE(Web) + FCM(Flutter) */
     public void sendBookingUpdated(Long userId, String role, BookingResponse booking) {
         sseEmitterRegistry.send(
                 userId,
@@ -32,6 +34,7 @@ public class NotificationService {
                 SseEmitterRegistry.EVENT_BOOKING_UPDATED,
                 booking
         );
+        fcmService.sendBookingUpdated(userId, booking);
     }
 
     private void validateSubscriber(Long userId, String role) {
