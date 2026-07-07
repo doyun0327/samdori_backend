@@ -102,6 +102,12 @@ public class FcmService {
         data.put("status", booking.getStatus());
         data.put("date", booking.getDate());
         data.put("timeSlot", booking.getTimeSlot());
+        if (booking.getCancelReason() != null) {
+            data.put("cancelReason", booking.getCancelReason());
+        }
+        if (booking.getCancelledBy() != null) {
+            data.put("cancelledBy", booking.getCancelledBy());
+        }
         return data;
     }
 }

@@ -1,6 +1,7 @@
 package com.consult.reservation.dto;
 
 import com.consult.reservation.entity.Booking;
+import com.consult.reservation.entity.CancelledBy;
 import com.consult.reservation.entity.User;
 import java.time.LocalDateTime;
 import lombok.Getter;
@@ -19,6 +20,8 @@ public class BookingResponse {
     private final LocalDateTime requestedAt;
     private final LocalDateTime respondedAt;
     private final LocalDateTime cancelledAt;
+    private final String cancelReason;
+    private final String cancelledBy;
 
     public BookingResponse(Booking booking, User client, User counselor) {
         this.id = booking.getId();
@@ -32,5 +35,11 @@ public class BookingResponse {
         this.requestedAt = booking.getRequestedAt();
         this.respondedAt = booking.getRespondedAt();
         this.cancelledAt = booking.getCancelledAt();
+        this.cancelReason = booking.getCancelReason();
+        this.cancelledBy = toCancelledByName(booking.getCancelledBy());
+    }
+
+    private String toCancelledByName(CancelledBy cancelledBy) {
+        return cancelledBy != null ? cancelledBy.name() : null;
     }
 }

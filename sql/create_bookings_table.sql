@@ -9,7 +9,9 @@ CREATE TABLE IF NOT EXISTS bookings (
     status VARCHAR(20) NOT NULL,
     requested_at TIMESTAMP NOT NULL,
     responded_at TIMESTAMP NULL,
-    cancelled_at TIMESTAMP NULL
+    cancelled_at TIMESTAMP NULL,
+    cancel_reason VARCHAR(500) NULL,
+    cancelled_by VARCHAR(20) NULL
 );
 
 CREATE INDEX IF NOT EXISTS idx_bookings_client_id ON bookings (client_id);
