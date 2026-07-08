@@ -10,6 +10,7 @@ import com.consult.reservation.repository.UserRepository;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
@@ -99,15 +100,17 @@ public class UserService {
                 .toList();
     }
 
-    /** 이름으로 내담자 검색 */
+    /** 이름 또는 전화번호로 내담자 검색 */
     public List<ClientSummaryResponse> searchClients(String keyword) {
         if (keyword == null || keyword.isBlank()) {
             return List.of();
         }
 
         return userRepository
-                .findTop20ByRoleAndNameContainingIgnoreCaseOrderByNameAsc(
-                        CLIENT_ROLE, keyword.trim())
+                .searchClientsByKeyword(
+                        CLIENT_ROLE,
+                        keyword.trim(),
+                        PageRequest.of(0, 20))
                 .stream()
                 .map(ClientSummaryResponse::new)
                 .toList();

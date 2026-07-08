@@ -30,7 +30,7 @@ public class UserController {
         return userService.getCounselors();
     }
 
-    /** GET /api/user/clients/search?keyword= — 내담자 이름 검색 */
+    /** GET /api/user/clients/search?keyword= — 내담자 이름·전화번호 검색 */
     @GetMapping("/clients/search")
     public List<ClientSummaryResponse> searchClients(@RequestParam String keyword) {
         return userService.searchClients(keyword);

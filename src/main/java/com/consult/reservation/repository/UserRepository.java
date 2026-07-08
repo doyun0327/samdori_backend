@@ -3,7 +3,10 @@ package com.consult.reservation.repository;
 import com.consult.reservation.entity.User;
 import java.util.List;
 import java.util.Optional;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 
 public interface UserRepository extends JpaRepository<User, Long> {
 
@@ -18,6 +21,18 @@ public interface UserRepository extends JpaRepository<User, Long> {
     /* 상담사 목록 조회 */
     List<User> findByRoleOrderByNameAsc(String role);
 
-    /* 내담자 이름 검색 */
-    List<User> findTop20ByRoleAndNameContainingIgnoreCaseOrderByNameAsc(String role, String name);
+    /* 내담자 검색: 이름 포함 OR 전화번호 포함 */
+    @Query("""
+            SELECT u FROM User u
+            WHERE u.role = :role
+              AND (
+                LOWER(u.name) LIKE LOWER(CONCAT('%', :keyword, '%'))
+                OR u.phoneNumber LIKE CONCAT('%', :keyword, '%')
+              )
+            ORDER BY u.name ASC
+            """)
+    List<User> searchClientsByKeyword(
+            @Param("role") String role,
+            @Param("keyword") String keyword,
+            Pageable pageable);
 }
