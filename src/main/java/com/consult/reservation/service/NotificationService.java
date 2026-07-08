@@ -1,6 +1,7 @@
 package com.consult.reservation.service;
 
 import com.consult.reservation.dto.BookingResponse;
+import com.consult.reservation.dto.SlotProposalResponse;
 import com.consult.reservation.notification.FcmService;
 import com.consult.reservation.notification.SseEmitterRegistry;
 import com.consult.reservation.repository.UserRepository;
@@ -35,6 +36,17 @@ public class NotificationService {
                 booking
         );
         fcmService.sendBookingUpdated(userId, role, booking);
+    }
+
+    /** slot-proposal-updated: SSE(Web) + FCM(Flutter) */
+    public void sendSlotProposalUpdated(Long userId, String role, SlotProposalResponse proposal) {
+        sseEmitterRegistry.send(
+                userId,
+                role,
+                SseEmitterRegistry.EVENT_SLOT_PROPOSAL_UPDATED,
+                proposal
+        );
+        fcmService.sendSlotProposalUpdated(userId, proposal);
     }
 
     private void validateSubscriber(Long userId, String role) {

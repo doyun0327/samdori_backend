@@ -11,6 +11,7 @@ import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 public class SseEmitterRegistry {
 
     public static final String EVENT_BOOKING_UPDATED = "booking-updated";
+    public static final String EVENT_SLOT_PROPOSAL_UPDATED = "slot-proposal-updated";
     /** 0 = 서버 타임아웃 없음. 연결은 프론트에서 close() 할 때까지 유지 */
     private static final long TIMEOUT_MS = 0L;
 

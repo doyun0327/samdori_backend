@@ -1,6 +1,7 @@
 package com.consult.reservation.notification;
 
 import com.consult.reservation.dto.BookingResponse;
+import com.consult.reservation.dto.SlotProposalResponse;
 import com.consult.reservation.entity.DeviceToken;
 import com.consult.reservation.repository.DeviceTokenRepository;
 import com.google.firebase.messaging.FirebaseMessaging;
@@ -33,6 +34,25 @@ public class FcmService {
         String title = buildTitle(booking, role);
         String body = buildBody(booking);
         Map<String, String> data = buildData(booking);
+
+        for (DeviceToken deviceToken : tokens) {
+            sendToToken(deviceToken, title, body, data);
+        }
+    }
+
+    /** userId에 등록된 모든 기기로 시간 제안 알림 push */
+    public void sendSlotProposalUpdated(Long userId, SlotProposalResponse proposal) {
+        List<DeviceToken> tokens = deviceTokenRepository.findByUserId(userId);
+        if (tokens.isEmpty()) {
+            log.warn("[FCM] userId={} 에 등록된 토큰 없음 — Flutter에서 POST /api/devices/token 호출 필요", userId);
+            return;
+        }
+
+        String title = "🔔 [시간 제안] " + proposal.getCounselorName() + " 상담사";
+        String body = proposal.getMessage() != null && !proposal.getMessage().isBlank()
+                ? proposal.getMessage()
+                : proposal.getSlots().size() + "개의 시간을 제안했습니다.";
+        Map<String, String> data = buildProposalData(proposal);
 
         for (DeviceToken deviceToken : tokens) {
             sendToToken(deviceToken, title, body, data);
@@ -108,6 +128,16 @@ public class FcmService {
         if (booking.getCancelledBy() != null) {
             data.put("cancelledBy", booking.getCancelledBy());
         }
+        return data;
+    }
+
+    private Map<String, String> buildProposalData(SlotProposalResponse proposal) {
+        Map<String, String> data = new HashMap<>();
+        data.put("type", "slot-proposal-updated");
+        data.put("proposalId", String.valueOf(proposal.getId()));
+        data.put("counselorId", String.valueOf(proposal.getCounselorId()));
+        data.put("clientId", String.valueOf(proposal.getClientId()));
+        data.put("status", proposal.getStatus());
         return data;
     }
 }
