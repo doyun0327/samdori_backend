@@ -1,5 +1,6 @@
 package com.consult.reservation.controller;
 
+import com.consult.reservation.dto.ClientSummaryResponse;
 import com.consult.reservation.dto.CounselorSummaryResponse;
 import com.consult.reservation.dto.LoginRequest;
 import com.consult.reservation.dto.UserCreateRequest;
@@ -12,6 +13,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -26,6 +28,12 @@ public class UserController {
     @GetMapping("/counselors")
     public List<CounselorSummaryResponse> getCounselors() {
         return userService.getCounselors();
+    }
+
+    /** GET /api/user/clients/search?keyword= — 내담자 이름 검색 */
+    @GetMapping("/clients/search")
+    public List<ClientSummaryResponse> searchClients(@RequestParam String keyword) {
+        return userService.searchClients(keyword);
     }
 
     @PostMapping("/create")

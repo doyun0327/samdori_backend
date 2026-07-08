@@ -17,4 +17,7 @@ public interface UserRepository extends JpaRepository<User, Long> {
 
     /* 상담사 목록 조회 */
     List<User> findByRoleOrderByNameAsc(String role);
+
+    /* 내담자 이름 검색 */
+    List<User> findTop20ByRoleAndNameContainingIgnoreCaseOrderByNameAsc(String role, String name);
 }

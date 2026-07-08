@@ -1,5 +1,6 @@
 package com.consult.reservation.service;
 
+import com.consult.reservation.dto.ClientSummaryResponse;
 import com.consult.reservation.dto.CounselorSummaryResponse;
 import com.consult.reservation.dto.LoginRequest;
 import com.consult.reservation.dto.UserCreateRequest;
@@ -19,6 +20,7 @@ import org.springframework.web.server.ResponseStatusException;
 public class UserService {
 
     private static final String COUNSELOR_ROLE = "COUNSELOR";
+    private static final String CLIENT_ROLE = "CLIENT";
 
     private final UserRepository userRepository;
 
@@ -94,6 +96,20 @@ public class UserService {
     public List<CounselorSummaryResponse> getCounselors() {
         return userRepository.findByRoleOrderByNameAsc(COUNSELOR_ROLE).stream()
                 .map(CounselorSummaryResponse::new)
+                .toList();
+    }
+
+    /** 이름으로 내담자 검색 */
+    public List<ClientSummaryResponse> searchClients(String keyword) {
+        if (keyword == null || keyword.isBlank()) {
+            return List.of();
+        }
+
+        return userRepository
+                .findTop20ByRoleAndNameContainingIgnoreCaseOrderByNameAsc(
+                        CLIENT_ROLE, keyword.trim())
+                .stream()
+                .map(ClientSummaryResponse::new)
                 .toList();
     }
 
