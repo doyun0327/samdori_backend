@@ -1,16 +1,15 @@
 package com.consult.reservation.config;
 
-import java.util.HashMap;
 import java.util.Map;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.env.EnvironmentPostProcessor;
 import org.springframework.core.env.ConfigurableEnvironment;
 import org.springframework.core.env.MapPropertySource;
-import org.springframework.util.StringUtils;
 
 /**
- * Railway 등에서 datasource 환경변수가 비어 있거나
- * postgresql:// (jdbc: 없음) 로 들어오면 yml 설정을 망가뜨리는 경우를 보정한다.
+ * Railway {@code DATABASE_URL} / {@code SPRING_DATASOURCE_URL} 이
+ * {@code postgresql://...} (jdbc 없음) 형태로 yml을 덮어쓰는 것을 막고,
+ * application.yml 의 JDBC 설정을 최우선으로 고정한다.
  */
 public class DatasourceUrlEnvironmentPostProcessor implements EnvironmentPostProcessor {
 
@@ -21,25 +20,14 @@ public class DatasourceUrlEnvironmentPostProcessor implements EnvironmentPostPro
 
     @Override
     public void postProcessEnvironment(ConfigurableEnvironment environment, SpringApplication application) {
-        Map<String, Object> fixes = new HashMap<>();
-
-        String url = environment.getProperty("spring.datasource.url");
-        if (!StringUtils.hasText(url)) {
-            fixes.put("spring.datasource.url", URL);
-        } else if (url.startsWith("postgresql://")) {
-            fixes.put("spring.datasource.url", "jdbc:" + url);
-        }
-
-        if (!StringUtils.hasText(environment.getProperty("spring.datasource.username"))) {
-            fixes.put("spring.datasource.username", USERNAME);
-        }
-        if (!StringUtils.hasText(environment.getProperty("spring.datasource.password"))) {
-            fixes.put("spring.datasource.password", PASSWORD);
-        }
-
-        if (!fixes.isEmpty()) {
-            environment.getPropertySources()
-                    .addFirst(new MapPropertySource("datasource-url-fix", fixes));
-        }
+        environment.getPropertySources().addFirst(new MapPropertySource(
+                "datasource-yml-override",
+                Map.of(
+                        "spring.datasource.url", URL,
+                        "spring.datasource.username", USERNAME,
+                        "spring.datasource.password", PASSWORD,
+                        "spring.datasource.driver-class-name", "org.postgresql.Driver"
+                )
+        ));
     }
 }

@@ -27,16 +27,25 @@ Railway에 **추가로 필요한 것**은 Firebase(와 CORS)입니다.
 
 > `PORT`는 Railway가 자동 주입 — 설정 불필요
 
-### 중요: 예전에 넣었던 DB 변수는 삭제
+### 중요: DB 관련 변수는 넣지 마세요 (삭제)
 
-Variables에 아래가 **남아 있으면** (특히 비어 있거나 `postgresql://`만 있는 경우) yml DB 설정을 덮어써서 기동이 실패합니다.
+이번 로그 오류 원인:
 
+```
+Driver ... claims to not accept jdbcUrl, postgresql://neondb_owner:...@...neon.tech/...
+```
+
+→ Railway에 `DATABASE_URL` / `SPRING_DATASOURCE_URL` 이 **Neon 복사본(`postgresql://...`)** 으로 들어가 있으면 JDBC가 거절합니다.
+스프링은 `jdbc:postgresql://...` 만 받습니다.
+
+Variables에서 **전부 삭제**:
+
+- `DATABASE_URL`
 - `SPRING_DATASOURCE_URL`
 - `SPRING_DATASOURCE_USERNAME`
 - `SPRING_DATASOURCE_PASSWORD`
-- `DATABASE_URL` (Neon/Postgres 플러그인으로 자동 생성된 경우)
 
-→ **삭제**한 뒤 Redeploy 하세요.
+코드가 yml DB 값을 강제로 쓰도록 보정했지만, 변수는 없는 편이 안전합니다.
 
 ### FIREBASE_CREDENTIALS_JSON 넣는 방법
 
