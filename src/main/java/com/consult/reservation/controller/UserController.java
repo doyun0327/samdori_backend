@@ -42,7 +42,7 @@ public class UserController {
         return userService.create(request);
     }
 
-    /** POST /api/user/login — loginId·password로 로그인 */
+    /** POST /api/user/login — loginId·password로 로그인 ㅎㅎ*/
     @PostMapping("/login")
     public UserResponse login(@RequestBody LoginRequest request) {
         return userService.login(request);
