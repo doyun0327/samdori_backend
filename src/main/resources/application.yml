@@ -4,7 +4,7 @@ spring:
   datasource:
     url: jdbc:postgresql://ep-long-morning-aowm9402-pooler.c-2.ap-southeast-1.aws.neon.tech/neondb?sslmode=require
     username: neondb_owner
-    password: npg_ROUo7sNM0PKI
+    password: npg_LsPZkHzW7Eu9
     driver-class-name: org.postgresql.Driver
   jpa:
     hibernate:
