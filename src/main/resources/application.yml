@@ -4,16 +4,19 @@ spring:
   application:
     name: reservation
   datasource:
-    url: ${SPRING_DATASOURCE_URL:}
-    username: ${SPRING_DATASOURCE_USERNAME:}
-    password: ${SPRING_DATASOURCE_PASSWORD:}
     driver-class-name: org.postgresql.Driver
   jpa:
+    database-platform: org.hibernate.dialect.PostgreSQLDialect
     hibernate:
       ddl-auto: validate
+    open-in-view: false
     show-sql: ${SHOW_SQL:false}
     properties:
       hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+        # DB 메타데이터 조회 실패 시 Dialect 오류로 위장되지 않게
+        boot:
+          allow_jdbc_metadata_access: false
         format_sql: false
 
 server:
