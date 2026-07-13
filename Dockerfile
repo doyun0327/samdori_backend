@@ -1,16 +1,15 @@
 # ---- build ----
-FROM eclipse-temurin:17-jdk AS build
+# Gradle이 미리 설치된 이미지 사용 → wrapper가 HTTPS로 zip 받을 필요 없음
+FROM gradle:8.14.3-jdk17-jammy AS build
 WORKDIR /app
 
-COPY gradlew .
-COPY gradle gradle
 COPY build.gradle settings.gradle gradle.properties ./
 COPY src src
 
-RUN chmod +x gradlew && ./gradlew bootJar -x test --no-daemon
+RUN gradle bootJar -x test --no-daemon
 
 # ---- run ----
-FROM eclipse-temurin:17-jre
+FROM eclipse-temurin:17-jre-jammy
 WORKDIR /app
 
 RUN groupadd -r spring && useradd -r -g spring spring
