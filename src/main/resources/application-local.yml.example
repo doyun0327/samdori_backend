@@ -1,0 +1,16 @@
+# 로컬 개발용 — 이 파일을 application-local.yml 로 복사 후 값을 채우세요.
+# application-local.yml 은 git에 올리지 않습니다.
+
+spring:
+  datasource:
+    url: jdbc:postgresql://YOUR_NEON_HOST/neondb?sslmode=require
+    username: neondb_owner
+    password: YOUR_PASSWORD
+  jpa:
+    show-sql: true
+    properties:
+      hibernate:
+        format_sql: true
+
+firebase:
+  credentials-path: file:C:/FirebaseSDK/your-firebase-adminsdk.json

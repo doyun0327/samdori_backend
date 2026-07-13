@@ -1,0 +1,14 @@
+.git
+.gitignore
+.gradle
+build
+.idea
+.vscode
+*.iml
+out
+bin
+HELP.md
+sql
+docs
+**/*.md
+src/main/resources/application-local.yml
