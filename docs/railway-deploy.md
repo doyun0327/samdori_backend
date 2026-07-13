@@ -17,11 +17,12 @@ git push origin master
 
 ## 3. Railway Variables (필수)
 
-Railway 대시보드 → Service → **Variables** 탭
+Railway 대시보드 → **서비스(앱) 클릭** → **Variables** 탭  
+(프로젝트 전체가 아니라 **서비스**에 넣어야 합니다)
 
 | Variable | 설명 | 예시 |
 |----------|------|------|
-| `SPRING_DATASOURCE_URL` | Neon JDBC URL | `jdbc:postgresql://ep-xxx.neon.tech/neondb?sslmode=require` |
+| `SPRING_DATASOURCE_URL` | Neon JDBC URL (**jdbc: 로 시작**) | `jdbc:postgresql://ep-xxx-pooler.region.aws.neon.tech/neondb?sslmode=require` |
 | `SPRING_DATASOURCE_USERNAME` | Neon 사용자 | `neondb_owner` |
 | `SPRING_DATASOURCE_PASSWORD` | Neon 비밀번호 | `(Neon에서 복사)` |
 | `FIREBASE_CREDENTIALS_JSON` | Firebase Admin JSON **전체 내용** (한 줄) | `{"type":"service_account",...}` |
@@ -29,6 +30,14 @@ Railway 대시보드 → Service → **Variables** 탭
 | `SHOW_SQL` | SQL 로그 (운영: false) | `false` |
 
 > `PORT`는 Railway가 자동 주입 — 설정 불필요
+
+### Failed to configure a DataSource / jdbc url 오류
+
+→ Railway에 `SPRING_DATASOURCE_URL`이 **없거나 비어 있음**.
+
+1. Neon Console → Connection string → **JDBC** 복사
+2. Variables에 위 3개(`URL` / `USERNAME` / `PASSWORD`) 저장
+3. 저장 후 자동 Redeploy 되는지 확인 (안 되면 Deployments에서 Redeploy)
 
 ### FIREBASE_CREDENTIALS_JSON 넣는 방법
 
