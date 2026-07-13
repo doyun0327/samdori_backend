@@ -54,6 +54,7 @@ public class DataSourceConfig {
         log.info("[DataSource] url={}, username={}", maskUrl(url),
                 StringUtils.hasText(username) ? username : "(in-url)");
 
+        // Boot 기본 DataSource가 postgresql:// 를 그대로 쓰는 경우 대비 — 여기서 항상 정규화
         HikariConfig config = new HikariConfig();
         config.setJdbcUrl(url);
         if (StringUtils.hasText(username)) {
