@@ -1,6 +1,7 @@
 package com.consult.reservation.service;
 
 import com.consult.reservation.dto.BookingResponse;
+import com.consult.reservation.dto.CountResponse;
 import com.consult.reservation.dto.ProposalSlotRequest;
 import com.consult.reservation.dto.SlotProposalBookRequest;
 import com.consult.reservation.dto.SlotProposalBookResponse;
@@ -79,12 +80,26 @@ public class SlotProposalService {
                 slotProposalRepository.findRowsByClientId(clientId, PageRequest.of(0, LIST_LIMIT)));
     }
 
-    /** 상담사가 보낸 제안 목록 — 유저 JOIN 1회 조회 */
+    /** 상담사가 보낸 제안 목록 — 유저 JOIN 1회 조회 (버튼 클릭 시) */
     @Transactional(readOnly = true)
     public List<SlotProposalResponse> findByCounselorId(Long counselorId) {
         validateUserId(counselorId, "counselorId");
         return mapProposalRows(
                 slotProposalRepository.findRowsByCounselorId(counselorId, PageRequest.of(0, LIST_LIMIT)));
+    }
+
+    /** 고객 제안 건수만 */
+    @Transactional(readOnly = true)
+    public CountResponse countByClientId(Long clientId) {
+        validateUserId(clientId, "clientId");
+        return new CountResponse(slotProposalRepository.countByClientId(clientId));
+    }
+
+    /** 상담사 제안 건수만 (목록 로드 전 배지/숫자용) */
+    @Transactional(readOnly = true)
+    public CountResponse countByCounselorId(Long counselorId) {
+        validateUserId(counselorId, "counselorId");
+        return new CountResponse(slotProposalRepository.countByCounselorId(counselorId));
     }
 
     /** 고객 — 슬롯 선택 후 예약 확정 */

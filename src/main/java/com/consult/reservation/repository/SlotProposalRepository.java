@@ -28,4 +28,8 @@ public interface SlotProposalRepository extends JpaRepository<SlotProposal, Long
             ORDER BY sp.createdAt DESC
             """)
     List<Object[]> findRowsByCounselorId(@Param("counselorId") Long counselorId, Pageable pageable);
+
+    long countByClientId(Long clientId);
+
+    long countByCounselorId(Long counselorId);
 }

@@ -1,5 +1,6 @@
 package com.consult.reservation.controller;
 
+import com.consult.reservation.dto.CountResponse;
 import com.consult.reservation.dto.SlotProposalBookRequest;
 import com.consult.reservation.dto.SlotProposalBookResponse;
 import com.consult.reservation.dto.SlotProposalCancelRequest;
@@ -34,13 +35,25 @@ public class SlotProposalController {
         return slotProposalService.create(request);
     }
 
-    /** GET /api/slot-proposals/client?clientId= — 고객 제안 목록 */
+    /** GET /api/slot-proposals/client/count?clientId= — 고객 제안 건수 */
+    @GetMapping("/client/count")
+    public CountResponse countClientProposals(@RequestParam Long clientId) {
+        return slotProposalService.countByClientId(clientId);
+    }
+
+    /** GET /api/slot-proposals/client?clientId= — 고객 제안 목록 (버튼 클릭 시) */
     @GetMapping("/client")
     public List<SlotProposalResponse> getClientProposals(@RequestParam Long clientId) {
         return slotProposalService.findByClientId(clientId);
     }
 
-    /** GET /api/slot-proposals/counselor?counselorId= — 상담사 제안 목록 */
+    /** GET /api/slot-proposals/counselor/count?counselorId= — 상담사 제안 건수 */
+    @GetMapping("/counselor/count")
+    public CountResponse countCounselorProposals(@RequestParam Long counselorId) {
+        return slotProposalService.countByCounselorId(counselorId);
+    }
+
+    /** GET /api/slot-proposals/counselor?counselorId= — 상담사 제안 목록 (버튼 클릭 시) */
     @GetMapping("/counselor")
     public List<SlotProposalResponse> getCounselorProposals(@RequestParam Long counselorId) {
         return slotProposalService.findByCounselorId(counselorId);
