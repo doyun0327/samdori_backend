@@ -9,6 +9,8 @@ import com.consult.reservation.repository.UserRepository;
 import java.time.LocalDate;
 import java.time.format.DateTimeParseException;
 import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
@@ -34,8 +36,14 @@ public class CounselorAvailabilityService {
         LocalDate date = parseDate(request.getDate());
         List<String> timeSlots = normalizeTimeSlots(request.getTimeSlots());
 
+        Set<String> existingSlots = availabilityRepository
+                .findByCounselorIdAndAvailabilityDateOrderByTimeSlotAsc(counselorId, date)
+                .stream()
+                .map(slot -> normalizeTimeSlot(slot.getTimeSlot()))
+                .collect(Collectors.toSet());
+
         for (String timeSlot : timeSlots) {
-            if (isDuplicate(counselorId, date, timeSlot)) {
+            if (existingSlots.contains(timeSlot)) {
                 continue;
             }
 
@@ -44,6 +52,7 @@ public class CounselorAvailabilityService {
             availability.setAvailabilityDate(date);
             availability.setTimeSlot(timeSlot);
             availabilityRepository.save(availability);
+            existingSlots.add(timeSlot);
         }
 
         List<String> savedSlots = findTimeSlotsByDate(counselorId, date);
@@ -81,6 +90,7 @@ public class CounselorAvailabilityService {
     }
 
     /** 상담사 id로 등록된 상담 가능 시간 목록을 { date, timeSlot }[] 형태로 반환한다. */
+    @Transactional(readOnly = true)
     public List<AvailabilityItemResponse> findAll(Long id) {
         validateCounselorId(id);
 
@@ -96,14 +106,6 @@ public class CounselorAvailabilityService {
         if (!userRepository.existsById(id)) {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "존재하지 않는 상담사입니다.");
         }
-    }
-
-    /** counselor_id + availability_date + time_slot 이 모두 같으면 중복 */
-    private boolean isDuplicate(Long counselorId, LocalDate date, String timeSlot) {
-        return availabilityRepository
-                .findByCounselorIdAndAvailabilityDateOrderByTimeSlotAsc(counselorId, date)
-                .stream()
-                .anyMatch(existing -> isSameTimeSlot(existing.getTimeSlot(), timeSlot));
     }
 
     private boolean isSameTimeSlot(String left, String right) {

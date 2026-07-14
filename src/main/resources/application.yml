@@ -6,15 +6,20 @@ spring:
     username: neondb_owner
     password: npg_LsPZkHzW7Eu9
     driver-class-name: org.postgresql.Driver
+    hikari:
+      maximum-pool-size: 5
+      minimum-idle: 1
+      connection-timeout: 10000
   jpa:
+    open-in-view: false
     database-platform: org.hibernate.dialect.PostgreSQLDialect
     hibernate:
       ddl-auto: validate
-    show-sql: true
+    show-sql: false
     properties:
       hibernate:
         dialect: org.hibernate.dialect.PostgreSQLDialect
-        format_sql: true
+        format_sql: false
 
 server:
   port: ${PORT:8080}

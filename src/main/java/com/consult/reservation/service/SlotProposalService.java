@@ -23,7 +23,12 @@ import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
@@ -69,23 +74,19 @@ public class SlotProposalService {
     }
 
     /** 고객이 받은 제안 목록 */
+    @Transactional(readOnly = true)
     public List<SlotProposalResponse> findByClientId(Long clientId) {
         validateUserId(clientId, "clientId");
         findClient(clientId);
-
-        return slotProposalRepository.findByClientIdOrderByCreatedAtDesc(clientId).stream()
-                .map(this::toResponse)
-                .toList();
+        return toResponses(slotProposalRepository.findByClientIdOrderByCreatedAtDesc(clientId));
     }
 
     /** 상담사가 보낸 제안 목록 */
+    @Transactional(readOnly = true)
     public List<SlotProposalResponse> findByCounselorId(Long counselorId) {
         validateUserId(counselorId, "counselorId");
         findCounselor(counselorId);
-
-        return slotProposalRepository.findByCounselorIdOrderByCreatedAtDesc(counselorId).stream()
-                .map(this::toResponse)
-                .toList();
+        return toResponses(slotProposalRepository.findByCounselorIdOrderByCreatedAtDesc(counselorId));
     }
 
     /** 고객 — 슬롯 선택 후 예약 확정 */
@@ -361,10 +362,39 @@ public class SlotProposalService {
         return value == null || value.isBlank() ? null : value.trim();
     }
 
+    private List<SlotProposalResponse> toResponses(List<SlotProposal> proposals) {
+        if (proposals.isEmpty()) {
+            return List.of();
+        }
+        Map<Long, User> users = loadUsers(proposals);
+        return proposals.stream()
+                .map(proposal -> toResponse(
+                        proposal,
+                        requireUser(users, proposal.getCounselorId(), "존재하지 않는 상담사입니다."),
+                        requireUser(users, proposal.getClientId(), "존재하지 않는 내담자입니다.")))
+                .toList();
+    }
+
+    private Map<Long, User> loadUsers(List<SlotProposal> proposals) {
+        Set<Long> ids = new HashSet<>();
+        for (SlotProposal proposal : proposals) {
+            ids.add(proposal.getClientId());
+            ids.add(proposal.getCounselorId());
+        }
+        return userRepository.findAllById(ids).stream()
+                .collect(Collectors.toMap(User::getId, Function.identity()));
+    }
+
+    private User requireUser(Map<Long, User> users, Long id, String notFoundMessage) {
+        User user = users.get(id);
+        if (user == null) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, notFoundMessage);
+        }
+        return user;
+    }
+
     private SlotProposalResponse toResponse(SlotProposal proposal) {
-        User client = findUser(proposal.getClientId(), "존재하지 않는 내담자입니다.");
-        User counselor = findUser(proposal.getCounselorId(), "존재하지 않는 상담사입니다.");
-        return toResponse(proposal, counselor, client);
+        return toResponses(List.of(proposal)).get(0);
     }
 
     private SlotProposalResponse toResponse(SlotProposal proposal, User counselor, User client) {

@@ -15,7 +15,12 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.time.format.DateTimeParseException;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
@@ -74,22 +79,18 @@ public class BookingService {
     }
 
     /** 내담자 예약 목록 */
+    @Transactional(readOnly = true)
     public List<BookingResponse> findByClientId(Long clientId) {
         validateUserId(clientId, "clientId");
-
-        return bookingRepository.findByClientIdOrderByRequestedAtDesc(clientId).stream()
-                .map(this::toResponse)
-                .toList();
+        return toResponses(bookingRepository.findByClientIdOrderByRequestedAtDesc(clientId));
     }
 
     /** 상담사 예약 요청 목록 */
+    @Transactional(readOnly = true)
     public List<BookingResponse> findByCounselorId(Long counselorId) {
         validateUserId(counselorId, "counselorId");
         findCounselor(counselorId);
-
-        return bookingRepository.findByCounselorIdOrderByRequestedAtDesc(counselorId).stream()
-                .map(this::toResponse)
-                .toList();
+        return toResponses(bookingRepository.findByCounselorIdOrderByRequestedAtDesc(counselorId));
     }
 
     /** 상담사 예약 수락 */
@@ -248,10 +249,39 @@ public class BookingService {
         return counselor;
     }
 
+    private List<BookingResponse> toResponses(List<Booking> bookings) {
+        if (bookings.isEmpty()) {
+            return List.of();
+        }
+        Map<Long, User> users = loadUsers(bookings);
+        return bookings.stream()
+                .map(booking -> toResponse(
+                        booking,
+                        requireUser(users, booking.getClientId(), "존재하지 않는 내담자입니다."),
+                        requireUser(users, booking.getCounselorId(), "존재하지 않는 상담사입니다.")))
+                .toList();
+    }
+
+    private Map<Long, User> loadUsers(List<Booking> bookings) {
+        Set<Long> ids = new HashSet<>();
+        for (Booking booking : bookings) {
+            ids.add(booking.getClientId());
+            ids.add(booking.getCounselorId());
+        }
+        return userRepository.findAllById(ids).stream()
+                .collect(Collectors.toMap(User::getId, Function.identity()));
+    }
+
+    private User requireUser(Map<Long, User> users, Long id, String notFoundMessage) {
+        User user = users.get(id);
+        if (user == null) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, notFoundMessage);
+        }
+        return user;
+    }
+
     private BookingResponse toResponse(Booking booking) {
-        User client = findUser(booking.getClientId(), "존재하지 않는 내담자입니다.");
-        User counselor = findUser(booking.getCounselorId(), "존재하지 않는 상담사입니다.");
-        return toResponse(booking, client, counselor);
+        return toResponses(List.of(booking)).get(0);
     }
 
     private BookingResponse toResponse(Booking booking, User client, User counselor) {
