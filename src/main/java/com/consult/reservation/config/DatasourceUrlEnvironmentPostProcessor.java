@@ -7,14 +7,14 @@ import org.springframework.core.env.ConfigurableEnvironment;
 import org.springframework.core.env.MapPropertySource;
 
 /**
- * Railway {@code DATABASE_URL} / {@code SPRING_DATASOURCE_URL} 이
- * {@code postgresql://...} (jdbc 없음) 형태로 yml을 덮어쓰는 것을 막고,
+ * Railway DATABASE_URL / SPRING_DATASOURCE_URL 이
+ * postgresql://... (jdbc 없음) 형태로 yml을 덮어쓰는 것을 막고,
  * application.yml 의 JDBC 설정을 최우선으로 고정한다.
  */
 public class DatasourceUrlEnvironmentPostProcessor implements EnvironmentPostProcessor {
 
     private static final String URL =
-            "jdbc:postgresql://ep-long-morning-aowm9402-pooler.c-2.ap-southeast-1.aws.neon.tech/neondb?sslmode=require";
+            "jdbc:postgresql://ep-long-morning-aowm9402-pooler.c-2.ap-southeast-1.aws.neon.tech/neondb?sslmode=require&tcpKeepAlive=true";
     private static final String USERNAME = "neondb_owner";
     private static final String PASSWORD = "npg_LsPZkHzW7Eu9";
 

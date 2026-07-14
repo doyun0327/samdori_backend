@@ -23,13 +23,9 @@ import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.function.Function;
-import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -43,6 +39,8 @@ public class SlotProposalService {
     private static final String CLIENT_ROLE = "CLIENT";
     private static final List<BookingStatus> ACTIVE_BOOKING_STATUSES = List.of(
             BookingStatus.PENDING, BookingStatus.ACCEPTED);
+
+    private static final int LIST_LIMIT = 100;
 
     private final SlotProposalRepository slotProposalRepository;
     private final BookingRepository bookingRepository;
@@ -73,20 +71,20 @@ public class SlotProposalService {
         return response;
     }
 
-    /** 고객이 받은 제안 목록 */
+    /** 고객이 받은 제안 목록 — 유저 JOIN 1회 조회 */
     @Transactional(readOnly = true)
     public List<SlotProposalResponse> findByClientId(Long clientId) {
         validateUserId(clientId, "clientId");
-        findClient(clientId);
-        return toResponses(slotProposalRepository.findByClientIdOrderByCreatedAtDesc(clientId));
+        return mapProposalRows(
+                slotProposalRepository.findRowsByClientId(clientId, PageRequest.of(0, LIST_LIMIT)));
     }
 
-    /** 상담사가 보낸 제안 목록 */
+    /** 상담사가 보낸 제안 목록 — 유저 JOIN 1회 조회 */
     @Transactional(readOnly = true)
     public List<SlotProposalResponse> findByCounselorId(Long counselorId) {
         validateUserId(counselorId, "counselorId");
-        findCounselor(counselorId);
-        return toResponses(slotProposalRepository.findByCounselorIdOrderByCreatedAtDesc(counselorId));
+        return mapProposalRows(
+                slotProposalRepository.findRowsByCounselorId(counselorId, PageRequest.of(0, LIST_LIMIT)));
     }
 
     /** 고객 — 슬롯 선택 후 예약 확정 */
@@ -362,39 +360,16 @@ public class SlotProposalService {
         return value == null || value.isBlank() ? null : value.trim();
     }
 
-    private List<SlotProposalResponse> toResponses(List<SlotProposal> proposals) {
-        if (proposals.isEmpty()) {
-            return List.of();
-        }
-        Map<Long, User> users = loadUsers(proposals);
-        return proposals.stream()
-                .map(proposal -> toResponse(
-                        proposal,
-                        requireUser(users, proposal.getCounselorId(), "존재하지 않는 상담사입니다."),
-                        requireUser(users, proposal.getClientId(), "존재하지 않는 내담자입니다.")))
+    private List<SlotProposalResponse> mapProposalRows(List<Object[]> rows) {
+        return rows.stream()
+                .map(row -> toResponse((SlotProposal) row[0], (User) row[1], (User) row[2]))
                 .toList();
     }
 
-    private Map<Long, User> loadUsers(List<SlotProposal> proposals) {
-        Set<Long> ids = new HashSet<>();
-        for (SlotProposal proposal : proposals) {
-            ids.add(proposal.getClientId());
-            ids.add(proposal.getCounselorId());
-        }
-        return userRepository.findAllById(ids).stream()
-                .collect(Collectors.toMap(User::getId, Function.identity()));
-    }
-
-    private User requireUser(Map<Long, User> users, Long id, String notFoundMessage) {
-        User user = users.get(id);
-        if (user == null) {
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND, notFoundMessage);
-        }
-        return user;
-    }
-
     private SlotProposalResponse toResponse(SlotProposal proposal) {
-        return toResponses(List.of(proposal)).get(0);
+        User client = findUser(proposal.getClientId(), "존재하지 않는 내담자입니다.");
+        User counselor = findUser(proposal.getCounselorId(), "존재하지 않는 상담사입니다.");
+        return toResponse(proposal, counselor, client);
     }
 
     private SlotProposalResponse toResponse(SlotProposal proposal, User counselor, User client) {

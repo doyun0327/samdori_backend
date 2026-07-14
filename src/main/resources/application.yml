@@ -2,14 +2,18 @@ spring:
   application:
     name: reservation
   datasource:
-    url: jdbc:postgresql://ep-long-morning-aowm9402-pooler.c-2.ap-southeast-1.aws.neon.tech/neondb?sslmode=require
+    url: jdbc:postgresql://ep-long-morning-aowm9402-pooler.c-2.ap-southeast-1.aws.neon.tech/neondb?sslmode=require&tcpKeepAlive=true
     username: neondb_owner
     password: npg_LsPZkHzW7Eu9
     driver-class-name: org.postgresql.Driver
     hikari:
       maximum-pool-size: 5
-      minimum-idle: 1
-      connection-timeout: 10000
+      minimum-idle: 2
+      connection-timeout: 5000
+      validation-timeout: 3000
+      idle-timeout: 600000
+      max-lifetime: 1700000
+      keepalive-time: 30000
   jpa:
     open-in-view: false
     database-platform: org.hibernate.dialect.PostgreSQLDialect
